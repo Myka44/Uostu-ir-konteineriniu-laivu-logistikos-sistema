@@ -1,20 +1,39 @@
 package com.pvp.backend.model;
 
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
 
 @Entity
+@Table(name = "containers")
 public class Container {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ContainerType type;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     private Double weight;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     private Double volume;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     private Double maxWeight;
+
+    @NotNull
+    @DecimalMin(value = "0.0", inclusive = true)
     private Double maxVolume;
-    private String warningLabel;
+
+    @Enumerated(EnumType.STRING)
+    private WarningLabel warningLabel;
 
     public Long getId() {
         return id;
@@ -22,6 +41,14 @@ public class Container {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public ContainerType getType() {
+        return type;
+    }
+
+    public void setType(ContainerType type) {
+        this.type = type;
     }
 
     public Double getWeight() {
@@ -56,11 +83,11 @@ public class Container {
         this.maxVolume = maxVolume;
     }
 
-    public String getWarningLabel() {
+    public WarningLabel getWarningLabel() {
         return warningLabel;
     }
 
-    public void setWarningLabel(String warningLabel) {
+    public void setWarningLabel(WarningLabel warningLabel) {
         this.warningLabel = warningLabel;
     }
 }
