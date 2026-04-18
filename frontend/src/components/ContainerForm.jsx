@@ -1,17 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 const TYPE_OPTIONS = [
-  { value: "STANDARTINIS", label: "Standartinis" },
-  { value: "SALDOMAS", label: "Šaldomas" },
-  { value: "CISTERNA", label: "Cisterna" }
+  { value: "STANDARD", label: "Standartinis" },
+  { value: "REFRIGERATED", label: "Šaldomas" },
+  { value: "TANK", label: "Cisterna" }
 ];
 
 const WARNING_OPTIONS = [
   { value: "", label: "No warning label" },
-  { value: "DEGUS", label: "Degus" },
-  { value: "TOKSISKAS", label: "Toksiškas" },
-  { value: "SPROGUS", label: "Sprogus" },
-  { value: "RADIOAKTYVUS", label: "Radioaktyvus" }
+  { value: "FLAMMABLE", label: "Degus" },
+  { value: "TOXIC", label: "Toksiškas" },
+  { value: "EXPLOSIVE", label: "Sprogus" },
+  { value: "RADIOACTIVE", label: "Radioaktyvus" }
 ];
 
 function normalizeInitialValues(initialValues) {
@@ -111,6 +111,9 @@ export default function ContainerForm({
     <form onSubmit={handleSubmit} className="card form-card">
       <div className="section-heading">
         <h2>Container data</h2>
+        <p className="muted">
+          Adjust the enum values here if your backend enum names differ.
+        </p>
       </div>
 
       {serverError ? <div className="alert alert-error">{serverError}</div> : null}

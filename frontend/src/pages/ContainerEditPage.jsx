@@ -39,11 +39,12 @@ export default function ContainerEditPage() {
 
     try {
       await updateContainer(id, payload);
-      navigate(`/containers/${id}`, {
+      //navigate(`/containers/${id}`, {
+      navigate(`/containers`, {
         state: { message: `Container #${id} updated successfully.` }
       });
     } catch (err) {
-      setServerError(buildErrorMessage(err, "Failed to update the container."));
+      setServerError(buildErrorMessage(err, `Failed to update the container.`));
     } finally {
       setIsSubmitting(false);
     }

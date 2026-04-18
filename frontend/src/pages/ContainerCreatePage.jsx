@@ -14,8 +14,9 @@ export default function ContainerCreatePage() {
 
     try {
       const created = await createContainer(payload);
-      navigate(`/containers/${created.id ?? ""}`.replace(/\/$/, ""), {
-        state: { message: "Container created successfully." }
+      //navigate(`/containers/${created.id ?? ""}`.replace(/\/$/, ""), {
+      navigate(`/containers}`, {
+        state: { message: `Container created successfully.` }
       });
     } catch (err) {
       setServerError(buildErrorMessage(err, "Failed to create the container."));

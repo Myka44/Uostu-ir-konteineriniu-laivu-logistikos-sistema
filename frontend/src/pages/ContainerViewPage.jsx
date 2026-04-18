@@ -83,19 +83,6 @@ export default function ContainerViewPage() {
             <Detail label="Max volume" value={container.maxVolume} />
             <Detail label="Warning label" value={container.warningLabel || "-"} />
           </div>
-
-          <div className="action-row">
-            <Link className="button button-primary" to={`/containers/${container.id}/edit`}>
-              Edit
-            </Link>
-            <button
-              className="button button-danger"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
-          </div>
         </div>
       )}
     </section>
