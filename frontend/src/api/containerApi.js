@@ -34,3 +34,8 @@ export async function updateContainer(id, payload) {
 export async function removeContainer(id) {
   await api.delete(`/containers/${id}`);
 }
+
+export async function getContainerTypes() {
+  const response = await api.get(`/container-types`);
+  return Array.isArray(response.data) ? response.data : [];
+}

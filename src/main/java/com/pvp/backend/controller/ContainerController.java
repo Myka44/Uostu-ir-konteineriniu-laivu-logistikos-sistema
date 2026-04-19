@@ -34,6 +34,12 @@ public class ContainerController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Container create(@Valid @RequestBody Container newContainer) {
+        if (newContainer.getType() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Container type is required");
+        }
+        // compute normalized maxVolume and maxWeight from the shared ContainerType
+        newContainer.setMaxVolume(newContainer.getType().getMaxVolume());
+        newContainer.setMaxWeight(newContainer.getType().getMaxWeightKg());
         validateBusinessRules(newContainer);
         newContainer.setId(null);
         return containerRepository.save(newContainer);
@@ -41,7 +47,12 @@ public class ContainerController {
 
     @PutMapping("/{id}")
     public Container update(@PathVariable Long id, @Valid @RequestBody Container updatedContainer) {
-        validateBusinessRules(updatedContainer);
+        if (updatedContainer.getType() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Container type is required");
+        }
+        // compute normalized maxVolume and maxWeight from the shared ContainerType
+        updatedContainer.setMaxVolume(updatedContainer.getType().getMaxVolume());
+        updatedContainer.setMaxWeight(updatedContainer.getType().getMaxWeightKg());
 
         return containerRepository.findById(id)
                 .map(container -> {

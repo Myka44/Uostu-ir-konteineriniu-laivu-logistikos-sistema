@@ -92,10 +92,10 @@ export default function ContainerListPage() {
                   <tr key={container.id}>
                     <td>{container.id}</td>
                     <td>{container.type || "-"}</td>
-                    <td>{container.weight}</td>
-                    <td>{container.volume}</td>
-                    <td>{container.maxWeight}</td>
-                    <td>{container.maxVolume}</td>
+                    <td>{container.weight !== null && container.weight !== undefined ? Number(container.weight).toFixed(2) : "-"}</td>
+                    <td>{container.volume !== null && container.volume !== undefined ? Number(container.volume).toFixed(2) : "-"}</td>
+                    <td>{container.maxWeight !== null && container.maxWeight !== undefined ? Number(container.maxWeight).toFixed(2) : "-"}</td>
+                    <td>{container.maxVolume !== null && container.maxVolume !== undefined ? Number(container.maxVolume).toFixed(2) : "-"}</td>
                     <td>{container.warningLabel || "-"}</td>
                     <td>
                       <div className="action-row">

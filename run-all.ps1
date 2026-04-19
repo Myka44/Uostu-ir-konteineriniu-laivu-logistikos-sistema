@@ -16,7 +16,7 @@ function Start-Processes {
     # Start backend in a new PowerShell window and keep it open while the backend runs
     $backendCmd = "cd '$((Get-Location).Path)'; .\mvnw.cmd spring-boot:run"
     $backend = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit","-Command", $backendCmd -PassThru
-    Start-Sleep -Milliseconds 500
+
     Write-Host "Starting frontend..."
     # Start frontend in a separate PowerShell window and keep it open while dev server runs
     $frontendDir = (Join-Path (Get-Location).Path "frontend")
@@ -24,32 +24,6 @@ function Start-Processes {
     $frontend = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit","-Command", $frontendCmd -PassThru
     return @($backend, $frontend)
 }
-
-while ($true) {
-    $procs = Start-Processes
-    Write-Host "Both processes started. Monitoring..."
-    $exited = $false
-    while (-not $exited) {
-        foreach ($p in $procs) {
-            if ($p.HasExited) {
-                Write-Host "Process $($p.Id) exited with code $($p.ExitCode). Restarting both..." -ForegroundColor Yellow
-                $exited = $true
-                break
-            }
-        }
-        Start-Sleep -Seconds 1
-    }
-
-    Start-Sleep -Seconds 1
-    foreach ($p in $procs) {
-        if (-not $p.HasExited) {
-            try {
-                Write-Host "Stopping process $($p.Id)..." -ForegroundColor Cyan
-                Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-            } catch {}
-        }
-    }
-
-    Write-Host "Restarting in $RestartDelay seconds..." -ForegroundColor Green
-    Start-Sleep -Seconds $RestartDelay
-}
+# Start both processes and exit this script immediately.
+$procs = Start-Processes
+Write-Host "Started backend (PID: $($procs[0].Id)) and frontend (PID: $($procs[1].Id)). Exiting run-all script." -ForegroundColor Green

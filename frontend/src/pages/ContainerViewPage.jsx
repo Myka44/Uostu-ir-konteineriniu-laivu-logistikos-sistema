@@ -77,10 +77,10 @@ export default function ContainerViewPage() {
           <div className="details-grid">
             <Detail label="ID" value={container.id} />
             <Detail label="Type" value={container.type} />
-            <Detail label="Weight" value={container.weight} />
-            <Detail label="Volume" value={container.volume} />
-            <Detail label="Max weight" value={container.maxWeight} />
-            <Detail label="Max volume" value={container.maxVolume} />
+            <Detail label="Weight" value={container.weight !== null && container.weight !== undefined ? Number(container.weight).toFixed(2) : "-"} />
+            <Detail label="Volume" value={container.volume !== null && container.volume !== undefined ? Number(container.volume).toFixed(2) : "-"} />
+            <Detail label="Max weight" value={container.maxWeight !== null && container.maxWeight !== undefined ? Number(container.maxWeight).toFixed(2) : "-"} />
+            <Detail label="Max volume" value={container.maxVolume !== null && container.maxVolume !== undefined ? Number(container.maxVolume).toFixed(2) : "-"} />
             <Detail label="Warning label" value={container.warningLabel || "-"} />
           </div>
         </div>

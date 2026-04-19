@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-
-const TYPE_OPTIONS = [
-  { value: "STANDARD", label: "Standartinis" },
-  { value: "REFRIGERATED", label: "Šaldomas" },
-  { value: "TANK", label: "Cisterna" }
-];
+import { getContainerTypes } from "../api/containerApi";
 
 const WARNING_OPTIONS = [
   { value: "", label: "No warning label" },
@@ -16,7 +11,7 @@ const WARNING_OPTIONS = [
 
 function normalizeInitialValues(initialValues) {
   return {
-    type: initialValues?.type ?? "",
+    type: initialValues?.type ?? "STANDARD",
     weight: initialValues?.weight ?? "",
     volume: initialValues?.volume ?? "",
     maxWeight: initialValues?.maxWeight ?? "",
@@ -77,15 +72,59 @@ export default function ContainerForm({
 
   const [form, setForm] = useState(normalizedInitialValues);
   const [errors, setErrors] = useState({});
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [typeMap, setTypeMap] = useState({});
 
   useEffect(() => {
     setForm(normalizedInitialValues);
+  }, [normalizedInitialValues]);
+
+  useEffect(() => {
+    let mounted = true;
+    getContainerTypes()
+      .then((types) => {
+        if (!mounted) return;
+        const LABELS = {
+          STANDARD: "Standartinis",
+          REFRIGERATED: "Šaldomas",
+          TANK: "Cisterna"
+        };
+        setTypeOptions(types.map((t) => ({ value: t.name, label: LABELS[t.name] || t.name })));
+        const map = {};
+        types.forEach((t) => (map[t.name] = t));
+        setTypeMap(map);
+        // if initial type present, apply its max values
+        if (normalizedInitialValues.type && map[normalizedInitialValues.type]) {
+          setForm((cur) => ({
+            ...cur,
+            maxVolume: map[normalizedInitialValues.type].maxVolume,
+            maxWeight: map[normalizedInitialValues.type].maxWeightKg
+          }));
+        }
+      })
+      .catch(() => {
+        setTypeOptions([]);
+        setTypeMap({});
+      });
+
+    return () => (mounted = false);
   }, [normalizedInitialValues]);
 
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setErrors((current) => ({ ...current, [name]: undefined }));
+
+    if (name === "type") {
+      const type = typeMap[value];
+      if (type) {
+        setForm((current) => ({
+          ...current,
+          maxVolume: type.maxVolume,
+          maxWeight: type.maxWeightKg
+        }));
+      }
+    }
   }
 
   async function handleSubmit(event) {
@@ -123,11 +162,23 @@ export default function ContainerForm({
           <span>Type</span>
           <select name="type" value={form.type} onChange={handleChange}>
             <option value="">Select type</option>
-            {TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {typeOptions.length > 0
+              ? typeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))
+              : [
+                  <option key="STANDARD" value="STANDARD">
+                    Standartinis
+                  </option>,
+                  <option key="REFRIGERATED" value="REFRIGERATED">
+                    Šaldomas
+                  </option>,
+                  <option key="TANK" value="TANK">
+                    Cisterna
+                  </option>
+                ]}
           </select>
           {errors.type ? <small className="field-error">{errors.type}</small> : null}
         </label>
@@ -176,13 +227,13 @@ export default function ContainerForm({
         </label>
 
         <label>
-          <span>Max weight</span>
+          <span>Max weight (kg)</span>
           <input
-            type="number"
-            step="0.01"
+            type="text"
             name="maxWeight"
-            value={form.maxWeight}
-            onChange={handleChange}
+            value={form.maxWeight !== "" ? Number(form.maxWeight).toFixed(2) : ""}
+            disabled
+            style={{ backgroundColor: "#f5f6f8", color: "#111" }}
           />
           {errors.maxWeight ? (
             <small className="field-error">{errors.maxWeight}</small>
@@ -190,13 +241,13 @@ export default function ContainerForm({
         </label>
 
         <label>
-          <span>Max volume</span>
+          <span>Max volume (m³)</span>
           <input
-            type="number"
-            step="0.01"
+            type="text"
             name="maxVolume"
-            value={form.maxVolume}
-            onChange={handleChange}
+            value={form.maxVolume !== "" ? Number(form.maxVolume).toFixed(2) : ""}
+            disabled
+            style={{ backgroundColor: "#f5f6f8", color: "#111" }}
           />
           {errors.maxVolume ? (
             <small className="field-error">{errors.maxVolume}</small>
