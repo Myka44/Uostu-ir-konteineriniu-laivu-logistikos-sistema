@@ -14,7 +14,8 @@ param(
 function Start-Processes {
     Write-Host "Starting backend..."
     # Start backend in a new PowerShell window and keep it open while the backend runs
-    $backendCmd = "cd '$((Get-Location).Path)'; .\mvnw.cmd spring-boot:run"
+    $backendDir = Join-Path (Get-Location).Path "backend"
+    $backendCmd = "cd '$backendDir'; .\mvnw.cmd spring-boot:run"
     $backend = Start-Process -FilePath "powershell.exe" -ArgumentList "-NoExit","-Command", $backendCmd -PassThru
 
     Write-Host "Starting frontend..."
