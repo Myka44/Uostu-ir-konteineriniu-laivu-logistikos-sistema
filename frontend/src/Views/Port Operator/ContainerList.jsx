@@ -3,11 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import DeleteContainerModal from "./DeleteContainerModal";
 import {
   buildErrorMessage,
-  getContainers,
-  removeContainer
+  getAll,
+  deleteContainer
 } from "./containerApi";
 
-export default function ContainerListPage() {
+export default function ContainerList() {
   const location = useLocation();
   const [containers, setContainers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -16,15 +16,15 @@ export default function ContainerListPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    loadContainers();
+    openContainers();
   }, []);
 
-  async function loadContainers() {
+  async function openContainers() {
     setIsLoading(true);
     setError("");
 
     try {
-      const data = await getContainers();
+      const data = await getAll();
       setContainers(data);
     } catch (err) {
       setError(buildErrorMessage(err, "Failed to load containers."));
@@ -33,12 +33,20 @@ export default function ContainerListPage() {
     }
   }
 
-  async function handleDelete(containerId) {
+  function clickContainerDelete(container) {
+    setSelectedContainer(container);
+  }
+
+  function clickDeny() {
+    setSelectedContainer(null);
+  }
+
+  async function clickConfirm(containerId) {
     setIsDeleting(true);
     setError("");
 
     try {
-      await removeContainer(containerId);
+      await deleteContainer(containerId);
       setContainers((current) =>
         current.filter((container) => container.id !== containerId)
       );
@@ -128,7 +136,7 @@ export default function ContainerListPage() {
         container={selectedContainer}
         isDeleting={isDeleting}
         onCancel={() => setSelectedContainer(null)}
-        onConfirm={handleDelete}
+        onConfirm={clickConfirm}
       />
     </section>
   );

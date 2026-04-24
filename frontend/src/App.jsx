@@ -1,5 +1,5 @@
-import AppRouter from "./NavigationController";
+import NavigationController from "./NavigationController";
 
 export default function App() {
-  return <AppRouter />;
+  return <NavigationController />;
 }

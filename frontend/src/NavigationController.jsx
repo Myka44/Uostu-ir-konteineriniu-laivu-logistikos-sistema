@@ -26,7 +26,7 @@ function Layout({ children }) {
   );
 }
 
-export default function AppRouter() {
+export default function NavigationController() {
   return (
     <Layout>
       <Routes>

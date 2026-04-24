@@ -7,7 +7,7 @@ import {
   updateContainer
 } from "./containerApi";
 
-export default function ContainerEditPage() {
+export default function ContainerEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [container, setContainer] = useState(null);
@@ -16,10 +16,10 @@ export default function ContainerEditPage() {
   const [serverError, setServerError] = useState("");
 
   useEffect(() => {
-    loadContainer();
+    openContainerEdit();
   }, [id]);
 
-  async function loadContainer() {
+  async function openContainerEdit() {
     setIsLoading(true);
     setServerError("");
 
@@ -33,7 +33,7 @@ export default function ContainerEditPage() {
     }
   }
 
-  async function handleSubmit(payload) {
+  async function submitContainerEdit(payload) {
     setIsSubmitting(true);
     setServerError("");
 
@@ -72,7 +72,7 @@ export default function ContainerEditPage() {
       ) : (
         <ContainerForm
           initialValues={container}
-          onSubmit={handleSubmit}
+          onSubmit={submitContainerEdit}
           submitLabel="Save changes"
           serverError={serverError}
           isSubmitting={isSubmitting}

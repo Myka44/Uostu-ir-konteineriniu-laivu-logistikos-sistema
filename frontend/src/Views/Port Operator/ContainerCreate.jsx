@@ -3,19 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import ContainerForm from "./ContainerForm";
 import { buildErrorMessage, createContainer } from "./containerApi";
 
-export default function ContainerCreatePage() {
+export default function ContainerCreate() {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(payload) {
+  async function submitContainerCreate(payload) {
     setIsSubmitting(true);
     setServerError("");
 
     try {
       const created = await createContainer(payload);
       //navigate(`/containers/${created.id ?? ""}`.replace(/\/$/, ""), {
-      navigate(`/containers}`, {
+      navigate(`/containers`, {
         state: { message: `Container created successfully.` }
       });
     } catch (err) {
@@ -39,7 +39,7 @@ export default function ContainerCreatePage() {
 
       <ContainerForm
         initialValues={{}}
-        onSubmit={handleSubmit}
+        onSubmit={submitContainerCreate}
         submitLabel="Create container"
         serverError={serverError}
         isSubmitting={isSubmitting}

@@ -11,7 +11,7 @@ export function buildErrorMessage(error, fallbackMessage) {
   return fallbackMessage;
 }
 
-export async function getContainers() {
+export async function getAll() {
   const response = await api.get("/containers");
   return Array.isArray(response.data) ? response.data : [];
 }
@@ -31,7 +31,7 @@ export async function updateContainer(id, payload) {
   return response.data;
 }
 
-export async function removeContainer(id) {
+export async function deleteContainer(id) {
   await api.delete(`/containers/${id}`);
 }
 

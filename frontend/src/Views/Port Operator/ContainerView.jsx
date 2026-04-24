@@ -3,10 +3,10 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   buildErrorMessage,
   getContainer,
-  removeContainer
+  deleteContainer
 } from "./containerApi";
 
-export default function ContainerViewPage() {
+export default function ContainerView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [container, setContainer] = useState(null);
@@ -15,10 +15,10 @@ export default function ContainerViewPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    loadContainer();
+    openContainer();
   }, [id]);
 
-  async function loadContainer() {
+  async function openContainer() {
     setIsLoading(true);
     setError("");
 
@@ -39,7 +39,7 @@ export default function ContainerViewPage() {
     setError("");
 
     try {
-      await removeContainer(id);
+      await deleteContainer(id);
       navigate("/containers", {
         replace: true,
         state: { message: `Container #${id} deleted successfully.` }
