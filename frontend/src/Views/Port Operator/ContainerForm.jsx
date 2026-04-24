@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getContainerTypes } from "../api/containerApi";
+import { getContainerTypes } from "./containerApi";
 
 const WARNING_OPTIONS = [
   { value: "", label: "No warning label" },
@@ -150,9 +150,6 @@ export default function ContainerForm({
     <form onSubmit={handleSubmit} className="card form-card">
       <div className="section-heading">
         <h2>Container data</h2>
-        <p className="muted">
-          Adjust the enum values here if your backend enum names differ.
-        </p>
       </div>
 
       {serverError ? <div className="alert alert-error">{serverError}</div> : null}

@@ -1,4 +1,4 @@
-import AppRouter from "./router/AppRouter";
+import AppRouter from "./NavigationController";
 
 export default function App() {
   return <AppRouter />;

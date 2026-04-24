@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import DeleteContainerModal from "../components/DeleteContainerModal";
+import DeleteContainerModal from "./DeleteContainerModal";
 import {
   buildErrorMessage,
   getContainers,
   removeContainer
-} from "../api/containerApi";
+} from "./containerApi";
 
 export default function ContainerListPage() {
   const location = useLocation();

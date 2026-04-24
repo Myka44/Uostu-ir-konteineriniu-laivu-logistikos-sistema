@@ -4,7 +4,7 @@ import {
   buildErrorMessage,
   getContainer,
   removeContainer
-} from "../api/containerApi";
+} from "./containerApi";
 
 export default function ContainerViewPage() {
   const { id } = useParams();

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import ContainerForm from "../components/ContainerForm";
-import { buildErrorMessage, createContainer } from "../api/containerApi";
+import ContainerForm from "./ContainerForm";
+import { buildErrorMessage, createContainer } from "./containerApi";
 
 export default function ContainerCreatePage() {
   const navigate = useNavigate();

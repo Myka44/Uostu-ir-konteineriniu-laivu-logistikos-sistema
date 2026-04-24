@@ -1,8 +1,8 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
-import ContainerCreatePage from "../pages/ContainerCreatePage";
-import ContainerEditPage from "../pages/ContainerEditPage";
-import ContainerListPage from "../pages/ContainerListPage";
-import ContainerViewPage from "../pages/ContainerViewPage";
+import ContainerCreate from "./Views/Port Operator/ContainerCreate";
+import ContainerEdit from "./Views/Port Operator/ContainerEdit";
+import ContainerList from "./Views/Port Operator/ContainerList";
+import ContainerView from "./Views/Port Operator/ContainerView";
 
 function Layout({ children }) {
   return (
@@ -31,10 +31,10 @@ export default function AppRouter() {
     <Layout>
       <Routes>
         <Route path="/" element={<Navigate to="/containers" replace />} />
-        <Route path="/containers" element={<ContainerListPage />} />
-        <Route path="/containers/new" element={<ContainerCreatePage />} />
-        <Route path="/containers/:id" element={<ContainerViewPage />} />
-        <Route path="/containers/:id/edit" element={<ContainerEditPage />} />
+        <Route path="/containers" element={<ContainerList />} />
+        <Route path="/containers/new" element={<ContainerCreate />} />
+        <Route path="/containers/:id" element={<ContainerView />} />
+        <Route path="/containers/:id/edit" element={<ContainerEdit />} />
         <Route path="*" element={<Navigate to="/containers" replace />} />
       </Routes>
     </Layout>

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import ContainerForm from "../components/ContainerForm";
+import ContainerForm from "./ContainerForm";
 import {
   buildErrorMessage,
   getContainer,
   updateContainer
-} from "../api/containerApi";
+} from "./containerApi";
 
 export default function ContainerEditPage() {
   const { id } = useParams();
