@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ContainerForm from "./ContainerForm";
-import { buildErrorMessage, createContainer } from "./containerApi";
+import { buildErrorMessage, submitContainerCreate_b } from "./containerApi";
 
 export default function ContainerCreate() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function ContainerCreate() {
     setServerError("");
 
     try {
-      const created = await createContainer(payload);
+      const created = await submitContainerCreate_b(payload);
       //navigate(`/containers/${created.id ?? ""}`.replace(/\/$/, ""), {
       navigate(`/containers`, {
         state: { message: `Container created successfully.` }

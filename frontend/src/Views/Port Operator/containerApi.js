@@ -21,12 +21,12 @@ export async function getContainer(id) {
   return response.data;
 }
 
-export async function createContainer(payload) {
+export async function submitContainerCreate_b(payload) {
   const response = await api.post("/containers", payload);
   return response.data;
 }
 
-export async function updateContainer(id, payload) {
+export async function submitContainerEdit_b(id, payload) {
   const response = await api.put(`/containers/${id}`, payload);
   return response.data;
 }

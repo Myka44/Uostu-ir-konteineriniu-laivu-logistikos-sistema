@@ -4,7 +4,7 @@ import ContainerForm from "./ContainerForm";
 import {
   buildErrorMessage,
   getContainer,
-  updateContainer
+  submitContainerEdit_b
 } from "./containerApi";
 
 export default function ContainerEdit() {
@@ -38,7 +38,7 @@ export default function ContainerEdit() {
     setServerError("");
 
     try {
-      await updateContainer(id, payload);
+      await submitContainerEdit_b(id, payload);
       //navigate(`/containers/${id}`, {
       navigate(`/containers`, {
         state: { message: `Container #${id} updated successfully.` }
