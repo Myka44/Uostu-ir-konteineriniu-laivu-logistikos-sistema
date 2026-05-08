@@ -21,14 +21,31 @@ export async function getOrder(id) {
   return response.data;
 }
 
+export async function getPorts() {
+  const response = await api.get(`/ports`);
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+export async function getAllItems() {
+  const response = await api.get(`/items`);
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+export async function getOrderItems(orderId) {
+  const response = await api.get(`/orders/${orderId}/items`);
+  return Array.isArray(response.data) ? response.data : [];
+}
+
 export async function submitOrderCreate_b(payload) {
-  throw new Error("Not implemented");
+  const response = await api.post(`/orders`, payload);
+  return response.data;
 }
 
 export async function submitOrderEdit_b(id, payload) {
-  throw new Error("Not implemented");
+  const response = await api.put(`/orders/${id}`, payload);
+  return response.data;
 }
 
 export async function deleteOrder(id) {
-  throw new Error("Not implemented");
+  await api.delete(`/orders/${id}`);
 }

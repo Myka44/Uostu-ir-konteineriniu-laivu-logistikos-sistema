@@ -1,0 +1,15 @@
+package com.pvp.backend.model;
+
+public enum ItemCategory {
+    ELECTRONICS,
+    CHEMICALS,
+    TEXTILES,
+    FURNITURE,
+    BUILDING_MATERIALS,
+    FROZEN_GOODS,
+    MEDICINES,
+    FLAMMABLES,
+    TOXIC_SUBSTANCES,
+    EXPLOSIVES,
+    RADIOACTIVE_MATERIALS
+}

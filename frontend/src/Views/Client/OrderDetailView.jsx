@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { buildErrorMessage, getOrder } from "../Port Operator/orderApi";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
+import { buildErrorMessage, getOrder, deleteOrder } from "./orderApi";
+import DeleteOrderModal from "./DeleteOrderModal";
 
 export default function OrderDetailView() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [order, setOrder] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showDelete, setShowDelete] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     open();
@@ -28,18 +31,26 @@ export default function OrderDetailView() {
     }
   }
 
-  function handleDeleteClick() {
-    setShowDelete(true);
+  function clickDelete() {
+    setSelectedOrder(order);
   }
 
   function handleCancelDelete() {
-    setShowDelete(false);
+    setSelectedOrder(null);
   }
 
-  function handleConfirmDelete() {
-    // Stub: delete not implemented yet
-    alert("Delete order - not implemented");
-    setShowDelete(false);
+  async function confirmDelete(orderId) {
+    setIsDeleting(true);
+    setError("");
+    try {
+      await deleteOrder(orderId);
+      navigate(`/orders`, { state: { message: "Order cancelled successfully." } });
+    } catch (err) {
+      setError(buildErrorMessage(err, "Failed to delete order."));
+    } finally {
+      setIsDeleting(false);
+      setSelectedOrder(null);
+    }
   }
 
   return (
@@ -76,7 +87,7 @@ export default function OrderDetailView() {
                 <Link className="button" to={`/orders/${order.id}/edit`}>
                   Edit
                 </Link>
-                <button className="button button-danger" onClick={handleDeleteClick}>
+                <button className="button button-danger" onClick={clickDelete}>
                   Delete
                 </button>
               </div>
@@ -85,15 +96,12 @@ export default function OrderDetailView() {
         )}
       </div>
 
-      {showDelete ? (
-        <div className="card">
-          <p>Delete order modal (stub)</p>
-          <div className="action-row">
-            <button className="button" onClick={handleCancelDelete}>Cancel</button>
-            <button className="button button-danger" onClick={handleConfirmDelete}>Confirm delete</button>
-          </div>
-        </div>
-      ) : null}
+      <DeleteOrderModal
+        order={selectedOrder}
+        isDeleting={isDeleting}
+        onCancel={handleCancelDelete}
+        onConfirm={confirmDelete}
+      />
     </section>
   );
 }

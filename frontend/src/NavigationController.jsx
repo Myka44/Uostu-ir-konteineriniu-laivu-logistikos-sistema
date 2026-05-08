@@ -5,6 +5,8 @@ import ContainerList from "./Views/Port Operator/ContainerList";
 import ContainerView from "./Views/Port Operator/ContainerView";
 import OrderListView from "./Views/Client/OrderListView";
 import OrderDetailView from "./Views/Client/OrderDetailView";
+import OrderCreateView from "./Views/Client/OrderCreateView";
+import OrderEditView from "./Views/Client/OrderEditView";
 
 function Layout({ children }) {
   return (
@@ -19,6 +21,9 @@ function Layout({ children }) {
             <p className="eyebrow">Client</p>
             <Link to="/orders" className="nav-link">
               Orders
+            </Link>
+            <Link to="/orders/new" className="nav-link nav-link-primary">
+              Create order
             </Link>
           </div>
 
@@ -48,9 +53,9 @@ export default function NavigationController() {
         <Route path="/containers/:id" element={<ContainerView />} />
         <Route path="/containers/:id/edit" element={<ContainerEdit />} />
         <Route path="/orders" element={<OrderListView />} />
-        <Route path="/orders/new" element={<div>Create order - coming soon</div>} />
+        <Route path="/orders/new" element={<OrderCreateView />} />
         <Route path="/orders/:id" element={<OrderDetailView />} />
-        <Route path="/orders/:id/edit" element={<div>Edit order - coming soon</div>} />
+        <Route path="/orders/:id/edit" element={<OrderEditView />} />
         <Route path="*" element={<Navigate to="/containers" replace />} />
       </Routes>
     </Layout>
