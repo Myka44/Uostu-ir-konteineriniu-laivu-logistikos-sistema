@@ -1,0 +1,59 @@
+.stowage-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 20px;
+}
+
+.stowage-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #d9e3ee;
+  border-radius: 14px;
+  background: #f8fbff;
+}
+
+.stowage-cell {
+  min-height: 42px;
+  border: 1px solid #cdd9e6;
+  border-radius: 10px;
+  background: white;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+}
+
+.stowage-cell-danger {
+  border-color: #c93b3b;
+}
+
+.message-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #edf5ff;
+  color: #315d8a;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .stowage-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.align-end {
+  align-self: end;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
