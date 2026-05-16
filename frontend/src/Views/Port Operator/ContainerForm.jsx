@@ -3,6 +3,7 @@ import { getContainerTypes } from "./containerApi";
 
 const WARNING_OPTIONS = [
   { value: "", label: "No warning label" },
+  { value: "CHEMICALS", label: "Chemikalai" },
   { value: "FLAMMABLE", label: "Degus" },
   { value: "TOXIC", label: "Toksiškas" },
   { value: "EXPLOSIVE", label: "Sprogus" },

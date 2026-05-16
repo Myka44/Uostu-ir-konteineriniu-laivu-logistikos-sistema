@@ -5,9 +5,12 @@ import com.pvp.backend.model.OrderItem;
 import com.pvp.backend.repository.OrderRepository;
 import com.pvp.backend.repository.ItemRepository;
 import com.pvp.backend.repository.OrderItemRepository;
+import com.pvp.backend.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import com.pvp.backend.model.UzsakymoBusena;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,16 +22,21 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class OrderController {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
+    private final ShipmentService shipmentService;
 
     public OrderController(OrderRepository orderRepository,
                            OrderItemRepository orderItemRepository,
-                           ItemRepository itemRepository) {
+                           ItemRepository itemRepository,
+                           ShipmentService shipmentService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.itemRepository = itemRepository;
+        this.shipmentService = shipmentService;
     }
 
     @GetMapping
@@ -82,6 +90,8 @@ public class OrderController {
             op.setTotalVolume(item.getVolume() * it.quantity);
             orderItemRepository.save(op);
         }
+
+        formuotiKroviniuSiuntas(savedOrder.getId());
 
         return savedOrder;
     }
@@ -151,14 +161,17 @@ public class OrderController {
             orderItemRepository.save(op);
         }
 
-        // trigger cargo assignment (stub)
         formuotiKroviniuSiuntas(saved.getId());
 
         return saved;
     }
 
     private void formuotiKroviniuSiuntas(Long orderId) {
-        // TODO: implement cargo assignment
+        try {
+            shipmentService.formuotiKroviniuSiuntas(orderId);
+        } catch (Exception ex) {
+            log.error("Cargo assignment failed for order {}", orderId, ex);
+        }
     }
 
     @DeleteMapping("/{id}")

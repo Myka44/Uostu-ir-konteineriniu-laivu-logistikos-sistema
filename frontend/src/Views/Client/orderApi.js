@@ -49,3 +49,13 @@ export async function submitOrderEdit_b(id, payload) {
 export async function deleteOrder(id) {
   await api.delete(`/orders/${id}`);
 }
+
+export async function runCargoAssignment(orderId) {
+  const response = await api.post(`/shipment/assign/${orderId}`);
+  return response.data;
+}
+
+export async function getShipmentResult(orderId) {
+  const response = await api.get(`/shipment/result/${orderId}`);
+  return response.data;
+}

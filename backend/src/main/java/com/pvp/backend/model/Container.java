@@ -1,5 +1,6 @@
 package com.pvp.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -7,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 @Entity
 @Table(name = "containers")
 public class Container {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -35,59 +35,44 @@ public class Container {
     @Enumerated(EnumType.STRING)
     private WarningLabel warningLabel;
 
-    public Long getId() {
-        return id;
-    }
+    /**
+     * A container can be assigned to one ship before a stowage plan is created.
+     * Stowage creation then uses only containers whose ship_id matches the selected ship.
+     */
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ship_id")
+    private Ship ship;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Long getId() { return id; }
 
-    public ContainerType getType() {
-        return type;
-    }
+    public void setId(Long id) { this.id = id; }
 
-    public void setType(ContainerType type) {
-        this.type = type;
-    }
+    public ContainerType getType() { return type; }
 
-    public Double getWeight() {
-        return weight;
-    }
+    public void setType(ContainerType type) { this.type = type; }
 
-    public void setWeight(Double weight) {
-        this.weight = weight;
-    }
+    public Double getWeight() { return weight; }
 
-    public Double getVolume() {
-        return volume;
-    }
+    public void setWeight(Double weight) { this.weight = weight; }
 
-    public void setVolume(Double volume) {
-        this.volume = volume;
-    }
+    public Double getVolume() { return volume; }
 
-    public Double getMaxWeight() {
-        return maxWeight;
-    }
+    public void setVolume(Double volume) { this.volume = volume; }
 
-    public void setMaxWeight(Double maxWeight) {
-        this.maxWeight = maxWeight;
-    }
+    public Double getMaxWeight() { return maxWeight; }
 
-    public Double getMaxVolume() {
-        return maxVolume;
-    }
+    public void setMaxWeight(Double maxWeight) { this.maxWeight = maxWeight; }
 
-    public void setMaxVolume(Double maxVolume) {
-        this.maxVolume = maxVolume;
-    }
+    public Double getMaxVolume() { return maxVolume; }
 
-    public WarningLabel getWarningLabel() {
-        return warningLabel;
-    }
+    public void setMaxVolume(Double maxVolume) { this.maxVolume = maxVolume; }
 
-    public void setWarningLabel(WarningLabel warningLabel) {
-        this.warningLabel = warningLabel;
-    }
+    public WarningLabel getWarningLabel() { return warningLabel; }
+
+    public void setWarningLabel(WarningLabel warningLabel) { this.warningLabel = warningLabel; }
+
+    public Ship getShip() { return ship; }
+
+    public void setShip(Ship ship) { this.ship = ship; }
 }

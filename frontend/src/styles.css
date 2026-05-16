@@ -159,6 +159,12 @@ tr:last-child td {
   color: white;
 }
 
+.button-warning {
+  background: #c77c13;
+  border-color: #c77c13;
+  color: white;
+}
+
 .button-small {
   min-height: 34px;
   padding: 0 12px;
@@ -181,6 +187,39 @@ tr:last-child td {
   background: #fff2f2;
   border-color: #f0c7c7;
   color: #9c2f2f;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #edf3f8;
+  color: #32506d;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-info {
+  background: #e5f0ff;
+  color: #1d70d5;
+}
+
+.badge-success {
+  background: #eaf7ef;
+  color: #1b6531;
+}
+
+.badge-neutral {
+  background: #edf3f8;
+  color: #51697f;
+}
+
+.badge-warning {
+  background: #fff3df;
+  color: #a15e00;
 }
 
 .form-grid {
@@ -241,6 +280,63 @@ select {
 
 .modal {
   width: min(100%, 440px);
+}
+
+.shipment-result-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.shipment-container-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+}
+
+.shipment-container-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.shipment-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.shipment-progress-label {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  align-content: start;
+}
+
+.shipment-progress {
+  width: 100%;
+  height: 12px;
+  border-radius: 999px;
+  background: #e6edf5;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.shipment-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1d70d5 0%, #57a7ff 100%);
+}
+
+.shipment-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.shipment-result-grid table th,
+.shipment-result-grid table td {
+  font-size: 14px;
 }
 
 @media (max-width: 700px) {

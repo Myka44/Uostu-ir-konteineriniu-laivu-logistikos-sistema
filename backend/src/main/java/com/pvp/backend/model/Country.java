@@ -1,8 +1,8 @@
 package com.pvp.backend.model;
 
 public enum Country {
-    LIETUVA,
-    MAZOJI_LIETUVA,
+    VALDIJA,
     NAUJOJI_LIETUVA,
-    VALDIJA
+    MAZOJI_LIETUVA,
+    LIETUVA
 }

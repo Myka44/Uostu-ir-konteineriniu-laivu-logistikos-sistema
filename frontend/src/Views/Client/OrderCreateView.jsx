@@ -50,6 +50,11 @@ export default function OrderCreateView() {
     if (!atvykimoUostas || atvykimoUostas.toString().trim() === "") {
       errors.atvykimoUostas = "Arrival port is required.";
     }
+    if (!clientId || clientId.toString().trim() === "") {
+      errors.clientId = "Client ID is required.";
+    } else if (Number.isNaN(Number(clientId)) || Number(clientId) <= 0) {
+      errors.clientId = "Client ID must be a positive number.";
+    }
     setFieldErrors(errors);
     if (!orderItems || orderItems.length === 0) {
       setServerError('At least one order item is required.');
@@ -67,7 +72,7 @@ export default function OrderCreateView() {
     const payload = {
       isvykimoUostas: isvykimoUostas,
       atvykimoUostas: atvykimoUostas,
-      clientId: clientId ? Number(clientId) : null,
+      clientId: Number(clientId),
       items: orderItems.map(i => ({ itemId: i.item.id, quantity: i.quantity }))
     };
 
@@ -130,7 +135,11 @@ export default function OrderCreateView() {
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
               type="number"
+              min="1"
             />
+            {fieldErrors.clientId ? (
+              <div className="alert alert-error">{fieldErrors.clientId}</div>
+            ) : null}
           </div>
 
           <div>

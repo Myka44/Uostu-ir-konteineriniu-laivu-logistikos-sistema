@@ -3,6 +3,8 @@ package com.pvp.backend.controller;
 
 import com.pvp.backend.model.*;
 import com.pvp.backend.repository.*;
+import com.pvp.backend.model.Ship;
+import com.pvp.backend.repository.ShipRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
