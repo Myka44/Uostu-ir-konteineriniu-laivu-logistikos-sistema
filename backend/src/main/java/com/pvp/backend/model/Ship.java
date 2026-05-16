@@ -132,4 +132,8 @@ public class Ship {
 
     public Port getPort() { return port; }
     public void setPort(Port port) { this.port = port; }
+
+    public ShipStatus getShipStatus() { return shipStatus; }
+    public void setShipStatus(ShipStatus shipStatus) { this.shipStatus = shipStatus; }
+
 }
