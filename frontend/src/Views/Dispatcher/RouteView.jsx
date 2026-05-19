@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { getRoute, getRouteSegments, recalculateRoute, buildErrorMessage } from "./shipApi";
 
 const SEG_STATE_LABELS = {
-  UNVISITED: "Not planned",
+  UNVISITED: "Not visited",
   ONGOING: "In progress",
   VISITED: "Visited",
 };

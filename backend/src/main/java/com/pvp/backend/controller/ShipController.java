@@ -1,10 +1,12 @@
 package com.pvp.backend.controller;
 
-
+import com.pvp.backend.client.NavigationApiClient;
+import com.pvp.backend.client.NavigationApiResponse;
+import com.pvp.backend.client.WeatherForecastApiClient;
+import com.pvp.backend.client.WeatherData;
 import com.pvp.backend.model.*;
 import com.pvp.backend.repository.*;
-import com.pvp.backend.model.Ship;
-import com.pvp.backend.repository.ShipRepository;
+import com.pvp.backend.service.RouteOptimizationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -24,19 +26,31 @@ public class ShipController {
     private final FuelAnalysisRepository fuelAnalysisRepository;
     private final CoordinateRepository coordinateRepository;
     private final PortRepository portRepository;
+    private final StowageRepository stowageRepository;
+    private final WeatherForecastApiClient weatherClient;
+    private final NavigationApiClient navigationClient;
+    private final RouteOptimizationService optimizationService;
 
     public ShipController(ShipRepository shipRepository,
                           RouteRepository routeRepository,
                           RouteSegmentRepository routeSegmentRepository,
                           FuelAnalysisRepository fuelAnalysisRepository,
                           CoordinateRepository coordinateRepository,
-                          PortRepository portRepository) {
+                          PortRepository portRepository,
+                          StowageRepository stowageRepository,
+                          WeatherForecastApiClient weatherClient,
+                          NavigationApiClient navigationClient,
+                          RouteOptimizationService optimizationService) {
         this.shipRepository = shipRepository;
         this.routeRepository = routeRepository;
         this.routeSegmentRepository = routeSegmentRepository;
         this.fuelAnalysisRepository = fuelAnalysisRepository;
         this.coordinateRepository = coordinateRepository;
         this.portRepository = portRepository;
+        this.stowageRepository = stowageRepository;
+        this.weatherClient = weatherClient;
+        this.navigationClient = navigationClient;
+        this.optimizationService = optimizationService;
     }
 
     @GetMapping
@@ -48,6 +62,13 @@ public class ShipController {
     public Ship getOne(@PathVariable Long id) {
         return shipRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ship not found"));
+    }
+
+    @GetMapping("/{id}/stowages")
+    public List<Stowage> getStowagesForShip(@PathVariable Long id) {
+        if (!shipRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ship not found");
+        return stowageRepository.findByShipId(id);
     }
 
     @PostMapping
@@ -74,8 +95,7 @@ public class ShipController {
         existing.setLength(updated.getLength());
         existing.setWidth(updated.getWidth());
         existing.setHeight(updated.getHeight());
-        existing.setState(updated.getState());
-        // Preserve state and port — they are managed via dedicated endpoints
+        if (updated.getState() != null) existing.setState(updated.getState());
         if (updated.getPort() != null && updated.getPort().getId() != null) {
             portRepository.findById(updated.getPort().getId())
                     .ifPresent(existing::setPort);
@@ -89,12 +109,11 @@ public class ShipController {
         Ship ship = shipRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ship not found"));
 
-        if (hasShipDeparted(ship)) {
+        if (ship.getState() != ShipState.ARRIVED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Cannot delete a ship that is currently at sea. Wait for it to arrive first.");
+                    "Laivą galima ištrinti tik kai jo būsena yra ARRIVED (prisijungęs prie uosto).");
         }
 
-        // Cascade delete: coordinates → fuel analyses → route segments → routes
         List<Route> routes = routeRepository.findByShipId(id);
         for (Route route : routes) {
             List<RouteSegment> segments = routeSegmentRepository.findByRouteId(route.getId());
@@ -113,9 +132,9 @@ public class ShipController {
         Ship ship = shipRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ship not found"));
 
-        if (!hasShipDeparted(ship)) {
+        if (ship.getState() != ShipState.DEPARTED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Ship has not departed. Cannot report docking arrival.");
+                    "Laivas turi būti DEPARTED būsenos, kad galėtų pranešti apie atvykimą.");
         }
 
         ship.setState(ShipState.AWAITING_DOCKING);
@@ -123,13 +142,13 @@ public class ShipController {
     }
 
     @PostMapping("/{id}/receive")
-    public Ship receiveShip(@PathVariable Long id, @RequestBody(required = false) ReceiveRequest req) {
+    public ReceiveShipResponse receiveShip(@PathVariable Long id) {
         Ship ship = shipRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ship not found"));
 
         if (ship.getState() != ShipState.AWAITING_DOCKING) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Ship must be in AWAITING_DOCKING state to be received.");
+                    "Laivas turi būti AWAITING_DOCKING būsenos, kad būtų galima jį priimti.");
         }
 
         Route route = routeRepository.findByShipIdAndState(id, RouteState.ACTIVE)
@@ -140,15 +159,22 @@ public class ShipController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No ongoing route segment."));
 
         Port destinationPort = ongoingSegment.getDestinationPort();
-        if (destinationPort == null) {
+        if (destinationPort == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Segment has no destination port.");
-        }
 
-        if (!hasEmptyDock(destinationPort)) {
+        if (!hasEmptyDock(destinationPort))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Destination port has no empty docks available.");
-        }
 
+        // ── 1. Atnaujinti laivo kurą pagal numatytą sąnaudą ──────────────────
+        Optional<FuelAnalysis> completedFa = fuelAnalysisRepository.findByRouteSegmentId(ongoingSegment.getId());
+        completedFa.ifPresent(fa -> {
+            double consumed = fa.getPredictedFuelConsumption() != null ? fa.getPredictedFuelConsumption() : 0.0;
+            double newFuel = Math.max(0.0, (ship.getFuelAmount() != null ? ship.getFuelAmount() : 0.0) - consumed);
+            ship.setFuelAmount(round2(newFuel));
+        });
+
+        // ── 2. Pakeisti laivo būseną ir uostą ────────────────────────────────
         ship.setState(ShipState.ARRIVED);
         ship.setPort(destinationPort);
         shipRepository.save(ship);
@@ -156,20 +182,61 @@ public class ShipController {
         ongoingSegment.setState(RouteSegmentState.VISITED);
         routeSegmentRepository.save(ongoingSegment);
 
-        boolean hasUnvisited = routeSegmentRepository
-                .findFirstByRouteIdAndStateOrderBySequenceNumber(route.getId(), RouteSegmentState.UNVISITED)
-                .isPresent()
-                || routeSegmentRepository
-                .findFirstByRouteIdAndStateOrderBySequenceNumber(route.getId(), RouteSegmentState.ONGOING)
-                .isPresent();
+        // ── 3. Patikrinti ar liko neaplankytų segmentų ───────────────────────
+        Optional<RouteSegment> nextUnvisited = routeSegmentRepository
+                .findFirstByRouteIdAndStateOrderBySequenceNumber(route.getId(), RouteSegmentState.UNVISITED);
 
-        if (!hasUnvisited) {
+        if (nextUnvisited.isEmpty()) {
             route.setState(RouteState.FINISHED);
             routeRepository.save(route);
+            return new ReceiveShipResponse(ship, false, false, null, ship.getFuelAmount());
         }
-        // else: trigger Perskaičiuoti maršrutą (recalculate — handled client-side or future impl)
 
-        return ship;
+        // ── 4. Automatiškai perskaičiuoti likusius maršruto segmentus ────────
+        try {
+            double[] shipCoords = portToLatLon(destinationPort);
+            WeatherData weather = weatherClient.getWeatherData(shipCoords[0], shipCoords[1]);
+
+            List<RouteSegment> remainingSegments = routeSegmentRepository
+                    .findByRouteIdOrderBySequenceNumber(route.getId())
+                    .stream()
+                    .filter(s -> s.getState() != RouteSegmentState.VISITED)
+                    .toList();
+
+            double remainingFuel = ship.getFuelAmount() != null ? ship.getFuelAmount() : 0.0;
+
+            for (RouteSegment seg : remainingSegments) {
+                double[] fromCoords = portToLatLon(seg.getStartPort());
+                double[] toCoords   = portToLatLon(seg.getDestinationPort());
+                NavigationApiResponse navResponse = navigationClient.getSeaRoutes(
+                        fromCoords[0], fromCoords[1], toCoords[0], toCoords[1]);
+
+                double fuelForSegment = optimizationService.findAndAssignBestSegmentVariant(
+                        seg, navResponse, weather, ship);
+
+                remainingFuel -= fuelForSegment;
+
+                FuelAnalysis fa = fuelAnalysisRepository.findByRouteSegmentId(seg.getId())
+                        .orElse(new FuelAnalysis());
+                fa.setRouteSegment(seg);
+                fa.setPredictedFuelConsumption(round2(fuelForSegment));
+                fa.setPredictedFuelRemaining(round2(Math.max(0, remainingFuel)));
+                fuelAnalysisRepository.save(fa);
+            }
+
+            // ── 5. Patikrinti ar pakanka kuro sekančiam segmentui ─────────────
+            RouteSegment first = nextUnvisited.get();
+            Optional<FuelAnalysis> nextFa = fuelAnalysisRepository.findByRouteSegmentId(first.getId());
+            Double nextFuelRequired = nextFa.map(FuelAnalysis::getPredictedFuelConsumption).orElse(null);
+            boolean sufficient = nextFuelRequired != null && ship.getFuelAmount() != null
+                    && ship.getFuelAmount() >= nextFuelRequired;
+
+            return new ReceiveShipResponse(ship, true, sufficient, nextFuelRequired, ship.getFuelAmount());
+
+        } catch (Exception e) {
+            // Perskaičiavimas nepavyko – grąžiname laivą su žinoma informacija
+            return new ReceiveShipResponse(ship, true, false, null, ship.getFuelAmount());
+        }
     }
 
     @PostMapping("/{id}/depart")
@@ -186,7 +253,7 @@ public class ShipController {
                     "Ship is not loaded. Complete loading before departing.");
         }
 
-        if (!isAccepted(ship)) {
+        if (ship.getState() != ShipState.ARRIVED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Ship is not in ARRIVED state. Cannot depart.");
         }
@@ -201,7 +268,9 @@ public class ShipController {
             FuelAnalysis fa = fuelOpt.get();
             if (!hasEnoughFuel(ship, fa.getPredictedFuelConsumption())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Not enough fuel for the next segment.");
+                        ship.getName() + " has insufficient fuel for the next segment. " +
+                                "Available: " + (ship.getFuelAmount() != null ? ship.getFuelAmount().intValue() : 0) + " l, " +
+                                "required: " + (fa.getPredictedFuelConsumption() != null ? fa.getPredictedFuelConsumption().intValue() : "?") + " l.");
             }
         }
 
@@ -216,31 +285,24 @@ public class ShipController {
     }
 
     // ── DTOs ─────────────────────────────────────────────────────────────────
-    public static class ReceiveRequest {
-        public Long portId;
-    }
+    public record ReceiveShipResponse(
+            Ship ship,
+            boolean hasActiveRoute,
+            boolean sufficientFuel,
+            Double nextSegmentFuelRequired,
+            Double currentFuelAmount
+    ) {}
 
+    // ── Pagalbiniai metodai ───────────────────────────────────────────────────
     private void validateShipData(Ship s) {
-        if (s.getName() == null || s.getName().isBlank()) {
+        if (s.getName() == null || s.getName().isBlank())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ship name is required.");
-        }
-        if (s.getType() == null) {
+        if (s.getType() == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ship type is required.");
-        }
-        if (s.getCapacity() == null || s.getCapacity() < 1) {
+        if (s.getCapacity() == null || s.getCapacity() < 1)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Capacity must be at least 1.");
-        }
-        if (s.getFuelAmount() == null || s.getFuelAmount() < 0) {
+        if (s.getFuelAmount() == null || s.getFuelAmount() < 0)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fuel amount cannot be negative.");
-        }
-    }
-
-    private boolean isAccepted(Ship ship) {
-        return ship.getState() == ShipState.ARRIVED;
-    }
-
-    private boolean hasShipDeparted(Ship ship) {
-        return ship.getState() == ShipState.DEPARTED;
     }
 
     private boolean hasEnoughFuel(Ship ship, double required) {
@@ -248,7 +310,7 @@ public class ShipController {
     }
 
     private boolean hasEmptyDock(Port port) {
-        if (port.getDockCount() == null) return true; // assume available if not configured
+        if (port.getDockCount() == null) return true;
         long shipsAtPort = shipRepository.findAll().stream()
                 .filter(s -> s.getPort() != null && s.getPort().getId().equals(port.getId()))
                 .count();
@@ -256,7 +318,25 @@ public class ShipController {
     }
 
     private boolean isLoaded(Long shipId) {
-        // A ship is loaded if it has at least one stowage in PAKRAUTA state
         return true; // TODO: integrate StowageRepository check
+    }
+
+    private double[] portToLatLon(Port port) {
+        if (port == null) return new double[]{57.5, 20.0};
+        if (port.getLatitude() != null && port.getLongitude() != null
+                && (port.getLatitude() != 0.0 || port.getLongitude() != 0.0)) {
+            return new double[]{port.getLatitude(), port.getLongitude()};
+        }
+        return switch (port.getName()) {
+            case "Klaipėda" -> new double[]{55.7033, 21.1396};
+            case "Riga"     -> new double[]{56.9496, 24.1052};
+            case "Tallinn"  -> new double[]{59.4370, 24.7536};
+            case "Gdansk"   -> new double[]{54.3520, 18.6466};
+            default         -> new double[]{57.5, 20.0};
+        };
+    }
+
+    private double round2(double val) {
+        return Math.round(val * 100.0) / 100.0;
     }
 }

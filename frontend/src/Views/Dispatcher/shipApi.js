@@ -46,6 +46,11 @@ export async function receiveShip(id) {
   return r.data;
 }
 
+export async function getShipStowages(shipId) {
+  const r = await api.get(`/ships/${shipId}/stowages`);
+  return Array.isArray(r.data) ? r.data : [];
+}
+
 export async function departShip(id) {
   const r = await api.post(`/ships/${id}/depart`);
   return r.data;

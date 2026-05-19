@@ -232,7 +232,6 @@ public class StowageService {
         }
 
         stowage.setStowageStatus(StowageStatus.PAKRAUTAS);
-        ship.setShipStatus(ShipStatus.PRIIMTAS);
         shipRepository.save(ship);
         Stowage saved = stowageRepository.save(stowage);
         return sendMessage(true, List.of("Plan commencement message: ship loading can start"), saved);

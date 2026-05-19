@@ -73,7 +73,7 @@ export default function ShipLoadingView() {
         <div className="card">
           <div className="details-grid">
             <div className="detail-item"><span className="detail-label">Ship</span><strong>{ship?.name || "-"}</strong></div>
-            <div className="detail-item"><span className="detail-label">Status</span><strong>{ship?.shipStatus || "-"}</strong></div>
+            <div className="detail-item"><span className="detail-label">Status</span><strong>{ship?.state || "-"}</strong></div>
             <div className="detail-item"><span className="detail-label">Port</span><strong>{ship?.port?.name || "-"}</strong></div>
           </div>
 

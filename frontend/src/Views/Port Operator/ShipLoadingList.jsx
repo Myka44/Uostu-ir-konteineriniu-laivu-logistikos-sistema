@@ -60,7 +60,7 @@ export default function ShipLoadingList() {
                     <td>{ship.id}</td>
                     <td>{ship.name}</td>
                     <td>{ship.type || "-"}</td>
-                    <td>{ship.shipStatus || "-"}</td>
+                    <td>{ship.state || "-"}</td>
                     <td>{ship.port?.name || "-"}</td>
                     <td>{ship.capacity || "-"}</td>
                     <td>

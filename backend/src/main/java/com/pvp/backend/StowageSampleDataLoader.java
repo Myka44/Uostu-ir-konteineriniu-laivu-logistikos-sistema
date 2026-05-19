@@ -1,7 +1,7 @@
 package com.pvp.backend;
 
 import com.pvp.backend.model.Ship;
-import com.pvp.backend.model.ShipStatus;
+import com.pvp.backend.model.ShipState;
 import com.pvp.backend.model.ShipType;
 import com.pvp.backend.repository.PortRepository;
 import com.pvp.backend.repository.ShipRepository;
@@ -27,7 +27,7 @@ public class StowageSampleDataLoader implements CommandLineRunner {
         Ship ship = new Ship();
         ship.setName("Klaipeda");
         ship.setType(ShipType.KLAIPEDA);
-        ship.setShipStatus(ShipStatus.PRIIMTAS);
+        ship.setState(ShipState.ARRIVED);
         ship.setRegistrationCountry("LIETUVA");
         ship.setWeight(20000.0);
         ship.setCapacity(240);

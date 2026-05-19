@@ -3,9 +3,7 @@ package com.pvp.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
@@ -29,7 +27,6 @@ public class Ship {
     @Column(length = 255)
     private Country country;
 
-    @NotNull
     private String registrationCountry;
 
     @DecimalMin(value = "0.0", inclusive = true)
@@ -39,13 +36,10 @@ public class Ship {
     @Min(1)
     private Integer capacity;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(length = 255)
     private ShipState state = ShipState.DISPATCHER;
-
-    @Enumerated(EnumType.STRING)
-    @Column(length = 255)
-    private ShipStatus shipStatus = ShipStatus.DISPECERIS;
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = true)
@@ -61,13 +55,12 @@ public class Ship {
 
     @NotNull
     @Min(1)
-    private Integer width= 6;
+    private Integer width = 6;
 
     @NotNull
     @Min(1)
     private Integer height = 4;
 
-    // Optional: assigned port (may be null when at sea)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "port_id")
     private Port port;
@@ -90,30 +83,18 @@ public class Ship {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getRegistrationCountry() {
-        return registrationCountry;
-    }
-
+    public String getRegistrationCountry() { return registrationCountry; }
     public void setRegistrationCountry(String registrationCountry) {
         this.registrationCountry = registrationCountry;
         if (registrationCountry != null) {
             try {
                 this.country = Country.valueOf(registrationCountry);
-            } catch (IllegalArgumentException ignored) {
-                // Keep custom registrationCountry strings without forcing them into the enum.
-            }
+            } catch (IllegalArgumentException ignored) {}
         }
     }
-
 
     public ShipState getState() { return state; }
-    public void setState(ShipState state) {
-        if (state == ShipState.ARRIVED || state == ShipState.ACCEPTED) {
-            this.shipStatus = ShipStatus.PRIIMTAS;
-        } else if (state == ShipState.DEPARTED || state == ShipState.SENT) {
-            this.shipStatus = ShipStatus.ISSIUSTAS;
-        }
-    }
+    public void setState(ShipState state) { this.state = state; }
 
     public Double getBaseFuelConsumption() { return baseFuelConsumption; }
     public void setBaseFuelConsumption(Double baseFuelConsumption) { this.baseFuelConsumption = baseFuelConsumption; }
@@ -132,8 +113,4 @@ public class Ship {
 
     public Port getPort() { return port; }
     public void setPort(Port port) { this.port = port; }
-
-    public ShipStatus getShipStatus() { return shipStatus; }
-    public void setShipStatus(ShipStatus shipStatus) { this.shipStatus = shipStatus; }
-
 }
