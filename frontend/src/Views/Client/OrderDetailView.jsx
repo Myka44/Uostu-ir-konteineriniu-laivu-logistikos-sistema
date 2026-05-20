@@ -30,12 +30,8 @@ export default function OrderDetailView() {
     try {
       const data = await getOrder(id);
       setOrder(data);
-      try {
-        const items = await getOrderItems(id);
-        setOrderItems(Array.isArray(items) ? items : []);
-      } catch (err) {
-        setError(buildErrorMessage(err, "Failed to load order items."));
-      }
+      // Read orderItems directly from the order object
+      setOrderItems(Array.isArray(data.orderItems) ? data.orderItems : []);
 
       try {
         const shipment = await getShipmentResult(id);

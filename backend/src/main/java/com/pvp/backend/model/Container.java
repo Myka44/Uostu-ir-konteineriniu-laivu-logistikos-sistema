@@ -44,6 +44,10 @@ public class Container {
     @JoinColumn(name = "ship_id")
     private Ship ship;
 
+    private Long orderId;
+
+    private boolean isHazardous = false;
+
     public Long getId() { return id; }
 
     public void setId(Long id) { this.id = id; }
@@ -75,4 +79,26 @@ public class Container {
     public Ship getShip() { return ship; }
 
     public void setShip(Ship ship) { this.ship = ship; }
+
+    public Long getOrderId() { return orderId; }
+
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public boolean isHazardous() { return isHazardous; }
+
+    public void setHazardous(boolean hazardous) { isHazardous = hazardous; }
+
+    public double getOccupiedVolumePercent() {
+        if (maxVolume == null || maxVolume <= 0.0) return 0.0;
+        double vol = volume == null ? 0.0 : volume;
+        return (vol / maxVolume) * 100.0;
+    }
+
+    public boolean hasCapacityFor(double weight, double volume) {
+        double cw = this.weight == null ? 0.0 : this.weight;
+        double cv = this.volume == null ? 0.0 : this.volume;
+        double mw = maxWeight == null ? 0.0 : maxWeight;
+        double mv = maxVolume == null ? 0.0 : maxVolume;
+        return cw + weight <= mw + 0.000001 && cv + volume <= mv + 0.000001;
+    }
 }

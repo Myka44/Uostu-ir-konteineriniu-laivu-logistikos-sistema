@@ -5,6 +5,7 @@ import com.pvp.backend.model.OrderItem;
 import com.pvp.backend.repository.OrderRepository;
 import com.pvp.backend.repository.ItemRepository;
 import com.pvp.backend.repository.OrderItemRepository;
+import com.pvp.backend.service.EmailService;
 import com.pvp.backend.service.ShipmentService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
@@ -28,15 +29,18 @@ public class OrderController {
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
     private final ShipmentService shipmentService;
+    private final EmailService emailService;
 
     public OrderController(OrderRepository orderRepository,
                            OrderItemRepository orderItemRepository,
                            ItemRepository itemRepository,
-                           ShipmentService shipmentService) {
+                           ShipmentService shipmentService,
+                           EmailService emailService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.itemRepository = itemRepository;
         this.shipmentService = shipmentService;
+        this.emailService = emailService;
     }
 
     @GetMapping
@@ -163,6 +167,7 @@ public class OrderController {
 
         formuotiKroviniuSiuntas(saved.getId());
 
+        emailService.sendNotification(saved.getId(), "UPDATED");
         return saved;
     }
 
@@ -186,5 +191,6 @@ public class OrderController {
 
         existing.setBusena(UzsakymoBusena.ATSAUKTA);
         orderRepository.save(existing);
+        emailService.sendNotification(id, "CANCELLED");
     }
 }

@@ -3,9 +3,9 @@ package com.pvp.backend.controller;
 import com.pvp.backend.dto.ShipmentContainerDto;
 import com.pvp.backend.dto.ShipmentItemDto;
 import com.pvp.backend.dto.ShipmentResultDto;
-import com.pvp.backend.model.ShipmentContainer;
+import com.pvp.backend.model.Container;
+import com.pvp.backend.repository.ContainerRepository;
 import com.pvp.backend.repository.OrderRepository;
-import com.pvp.backend.repository.ShipmentContainerRepository;
 import com.pvp.backend.repository.ShipmentItemRepository;
 import com.pvp.backend.service.ShipmentService;
 import org.springframework.http.HttpStatus;
@@ -26,16 +26,16 @@ import java.util.List;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
-    private final ShipmentContainerRepository shipmentContainerRepository;
+    private final ContainerRepository containerRepository;
     private final ShipmentItemRepository shipmentItemRepository;
     private final OrderRepository orderRepository;
 
     public ShipmentController(ShipmentService shipmentService,
-                              ShipmentContainerRepository shipmentContainerRepository,
+                              ContainerRepository containerRepository,
                               ShipmentItemRepository shipmentItemRepository,
                               OrderRepository orderRepository) {
         this.shipmentService = shipmentService;
-        this.shipmentContainerRepository = shipmentContainerRepository;
+        this.containerRepository = containerRepository;
         this.shipmentItemRepository = shipmentItemRepository;
         this.orderRepository = orderRepository;
     }
@@ -59,16 +59,16 @@ public class ShipmentController {
         ShipmentResultDto result = new ShipmentResultDto();
         result.setOrderId(orderId);
         List<ShipmentContainerDto> containerDtos = new ArrayList<>();
-        List<ShipmentContainer> containers = shipmentContainerRepository.findByOrderId(orderId);
-        for (ShipmentContainer container : containers) {
+        List<Container> containers = containerRepository.findByOrderId(orderId);
+        for (Container container : containers) {
             ShipmentContainerDto containerDto = new ShipmentContainerDto();
             containerDto.setContainerId(container.getId());
             containerDto.setContainerType(container.getType() == null ? null : container.getType().name());
             containerDto.setHazardous(container.isHazardous());
             containerDto.setWarningLabel(container.getWarningLabel() == null ? null : container.getWarningLabel().name());
-            containerDto.setCurrentWeight(container.getCurrentWeight() == null ? 0.0 : container.getCurrentWeight());
+            containerDto.setCurrentWeight(container.getWeight() == null ? 0.0 : container.getWeight());
             containerDto.setMaxWeight(container.getMaxWeight() == null ? 0.0 : container.getMaxWeight());
-            containerDto.setCurrentVolume(container.getCurrentVolume() == null ? 0.0 : container.getCurrentVolume());
+            containerDto.setCurrentVolume(container.getVolume() == null ? 0.0 : container.getVolume());
             containerDto.setMaxVolume(container.getMaxVolume() == null ? 0.0 : container.getMaxVolume());
             containerDto.setOccupiedVolumePercent(container.getOccupiedVolumePercent());
             List<ShipmentItemDto> itemDtos = new ArrayList<>();

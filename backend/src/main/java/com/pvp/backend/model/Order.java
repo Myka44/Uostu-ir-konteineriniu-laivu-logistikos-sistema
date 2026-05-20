@@ -3,6 +3,8 @@ package com.pvp.backend.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -27,6 +29,9 @@ public class Order {
 
     @NotNull
     private Long clientId;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<OrderItem> orderItems = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -74,5 +79,13 @@ public class Order {
 
     public void setClientId(Long clientId) {
         this.clientId = clientId;
+    }
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
     }
 }

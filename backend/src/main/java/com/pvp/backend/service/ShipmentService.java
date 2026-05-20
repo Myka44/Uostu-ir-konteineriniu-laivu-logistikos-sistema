@@ -3,20 +3,20 @@ package com.pvp.backend.service;
 import com.pvp.backend.dto.ShipmentContainerDto;
 import com.pvp.backend.dto.ShipmentItemDto;
 import com.pvp.backend.dto.ShipmentResultDto;
+import com.pvp.backend.model.Container;
 import com.pvp.backend.model.ContainerType;
 import com.pvp.backend.model.HazardLabel;
 import com.pvp.backend.model.Item;
 import com.pvp.backend.model.ItemCategory;
 import com.pvp.backend.model.Order;
 import com.pvp.backend.model.OrderItem;
-import com.pvp.backend.model.ShipmentContainer;
 import com.pvp.backend.model.ShipmentItem;
 import com.pvp.backend.model.UzsakymoBusena;
 import com.pvp.backend.model.WarningLabel;
+import com.pvp.backend.repository.ContainerRepository;
 import com.pvp.backend.repository.ItemRepository;
 import com.pvp.backend.repository.OrderItemRepository;
 import com.pvp.backend.repository.OrderRepository;
-import com.pvp.backend.repository.ShipmentContainerRepository;
 import com.pvp.backend.repository.ShipmentItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,18 +38,18 @@ public class ShipmentService {
 
     private final OrderItemRepository orderItemRepository;
     private final ItemRepository itemRepository;
-    private final ShipmentContainerRepository shipmentContainerRepository;
+    private final ContainerRepository containerRepository;
     private final ShipmentItemRepository shipmentItemRepository;
     private final OrderRepository orderRepository;
 
     public ShipmentService(OrderItemRepository orderItemRepository,
                            ItemRepository itemRepository,
-                           ShipmentContainerRepository shipmentContainerRepository,
+                           ContainerRepository containerRepository,
                            ShipmentItemRepository shipmentItemRepository,
                            OrderRepository orderRepository) {
         this.orderItemRepository = orderItemRepository;
         this.itemRepository = itemRepository;
-        this.shipmentContainerRepository = shipmentContainerRepository;
+        this.containerRepository = containerRepository;
         this.shipmentItemRepository = shipmentItemRepository;
         this.orderRepository = orderRepository;
     }
@@ -131,7 +131,7 @@ public class ShipmentService {
         while (!pendingQueue.isEmpty()) {
             PendingItem pendingItem = pendingQueue.removeFirst();
             WarningLabel warningLabel = resolveWarningLabel(pendingItem.preke);
-            ShipmentContainer container = getContainer(context, true, warningLabel, pendingItem.unitSvoris, pendingItem.unitTuris);
+            Container container = getContainer(context, true, warningLabel, pendingItem.unitSvoris, pendingItem.unitTuris);
             if (container == null) {
                 container = submitContainerCreate(context, true, warningLabel);
             }
@@ -162,13 +162,13 @@ public class ShipmentService {
         items.sort(Comparator.comparing(PendingItem::totalTuris, Comparator.reverseOrder()));
     }
 
-    private int pickNextItem(PendingItem pendingItem, ShipmentContainer container) {
+    private int pickNextItem(PendingItem pendingItem, Container container) {
         if (pendingItem == null || container == null || pendingItem.remainingKiekis <= 0) {
             return 0;
         }
 
-        double currentWeight = container.getCurrentWeight() == null ? 0.0 : container.getCurrentWeight();
-        double currentVolume = container.getCurrentVolume() == null ? 0.0 : container.getCurrentVolume();
+        double currentWeight = container.getWeight() == null ? 0.0 : container.getWeight();
+        double currentVolume = container.getVolume() == null ? 0.0 : container.getVolume();
         double remainingWeight = (container.getMaxWeight() == null ? 0.0 : container.getMaxWeight()) - currentWeight;
         double remainingVolume = (container.getMaxVolume() == null ? 0.0 : container.getMaxVolume()) - currentVolume;
         if (remainingWeight <= 0.0 || remainingVolume <= 0.0) {
@@ -186,8 +186,8 @@ public class ShipmentService {
         return Math.max(unitsFit, 0);
     }
 
-    private ShipmentContainer getContainer(AssignmentContext context, boolean hazardous, WarningLabel warningLabel, double weight, double volume) {
-        for (ShipmentContainer container : context.containers) {
+    private Container getContainer(AssignmentContext context, boolean hazardous, WarningLabel warningLabel, double weight, double volume) {
+        for (Container container : context.containers) {
             if (container.isHazardous() != hazardous) {
                 continue;
             }
@@ -201,8 +201,8 @@ public class ShipmentService {
         return null;
     }
 
-    private ShipmentContainer getContainer(AssignmentContext context, ItemCategory category, double weight, double volume) {
-        for (ShipmentContainer container : context.containers) {
+    private Container getContainer(AssignmentContext context, ItemCategory category, double weight, double volume) {
+        for (Container container : context.containers) {
             if (container.isHazardous()) {
                 continue;
             }
@@ -213,14 +213,14 @@ public class ShipmentService {
         return null;
     }
 
-    private ShipmentContainer submitContainerCreate(AssignmentContext context, boolean hazardous, WarningLabel warningLabel) {
-        ShipmentContainer container = new ShipmentContainer();
+    private Container submitContainerCreate(AssignmentContext context, boolean hazardous, WarningLabel warningLabel) {
+        Container container = new Container();
         container.setOrderId(context.orderId);
         container.setType(ContainerType.STANDARD);
+        container.setWeight(0.0);
+        container.setVolume(0.0);
         container.setMaxWeight(ContainerType.STANDARD.getMaxWeightKg());
         container.setMaxVolume(ContainerType.STANDARD.getMaxVolume());
-        container.setCurrentWeight(0.0);
-        container.setCurrentVolume(0.0);
         container.setHazardous(hazardous);
         container.setWarningLabel(warningLabel);
         context.containers.add(container);
@@ -228,7 +228,7 @@ public class ShipmentService {
         return container;
     }
 
-    private int submitContainerEdit(AssignmentContext context, ShipmentContainer container, PendingItem pendingItem) {
+    private int submitContainerEdit(AssignmentContext context, Container container, PendingItem pendingItem) {
         int unitsFit = pickNextItem(pendingItem, container);
         if (unitsFit < 1) {
             return 0;
@@ -238,7 +238,7 @@ public class ShipmentService {
         return unitsFit;
     }
 
-    private void assignItem(AssignmentContext context, ShipmentContainer container, PendingItem pendingItem, int unitsFit) {
+    private void assignItem(AssignmentContext context, Container container, PendingItem pendingItem, int unitsFit) {
         List<ShipmentItem> shipmentItems = context.itemsByContainer.computeIfAbsent(container, key -> new ArrayList<>());
         ShipmentItem shipmentItem = new ShipmentItem();
         shipmentItem.setShipmentContainerId(container.getId());
@@ -259,10 +259,12 @@ public class ShipmentService {
         shipmentItem.setZPosition(centerZ);
         shipmentItems.add(shipmentItem);
 
-        double currentWeight = container.getCurrentWeight() == null ? 0.0 : container.getCurrentWeight();
-        double currentVolume = container.getCurrentVolume() == null ? 0.0 : container.getCurrentVolume();
-        container.setCurrentWeight(currentWeight + shipmentItem.getSvoris());
-        container.setCurrentVolume(currentVolume + shipmentItem.getTuris());
+        double currentWeight = container.getWeight() == null ? 0.0 : container.getWeight();
+        double currentVolume = container.getVolume() == null ? 0.0 : container.getVolume();
+        double nextWeight = currentWeight + shipmentItem.getSvoris();
+        double nextVolume = currentVolume + shipmentItem.getTuris();
+        container.setWeight(nextWeight);
+        container.setVolume(nextVolume);
     }
 
     private boolean hazardousAssignmentDone() {
@@ -283,7 +285,7 @@ public class ShipmentService {
 
         while (!pendingQueue.isEmpty()) {
             PendingItem pendingItem = pendingQueue.removeFirst();   // This instead of pickNextItem(), since its a built in function of the queue
-            ShipmentContainer container = getContainer(context, pendingItem.preke.getCategory(), pendingItem.unitSvoris, pendingItem.unitTuris);
+            Container container = getContainer(context, pendingItem.preke.getCategory(), pendingItem.unitSvoris, pendingItem.unitTuris);
             boolean fits3d = container != null && pendingItem.preke.getLength() <= container.getType().getLengthMeters()
                     && pendingItem.preke.getHeight() <= container.getType().getHeightMeters()
                     && pendingItem.preke.getWidth() <= container.getType().getWidthMeters();
@@ -319,11 +321,11 @@ public class ShipmentService {
     }
 
     private void optimizeContainers(AssignmentContext context) {
-        List<ShipmentContainer> containers = getContainer(context);
+        List<Container> containers = getContainer(context);
         sortByOccupiedVolume(containers);
 
         while (!containers.isEmpty()) {
-            ShipmentContainer leastFilled = containers.get(0);
+            Container leastFilled = containers.get(0);
             if (leastFilled.getOccupiedVolumePercent() >= 50.0) {
                 break;
             }
@@ -336,22 +338,22 @@ public class ShipmentService {
         optimizationDone();
     }
 
-    private List<ShipmentContainer> getContainer(AssignmentContext context) {
+    private List<Container> getContainer(AssignmentContext context) {
         return context.containers;
     }
 
-    private void sortByOccupiedVolume(List<ShipmentContainer> containers) {
-        containers.sort(Comparator.comparingDouble(ShipmentContainer::getOccupiedVolumePercent));
+    private void sortByOccupiedVolume(List<Container> containers) {
+        containers.sort(Comparator.comparingDouble(Container::getOccupiedVolumePercent));
     }
 
-    private boolean tryMoveItemsToFuller(AssignmentContext context, ShipmentContainer sourceContainer, List<ShipmentContainer> sortedContainers) {
+    private boolean tryMoveItemsToFuller(AssignmentContext context, Container sourceContainer, List<Container> sortedContainers) {
         List<ShipmentItem> sourceItems = context.itemsByContainer.getOrDefault(sourceContainer, new ArrayList<>());
         if (sourceItems.isEmpty()) {
             return false;
         }
 
-        List<ShipmentContainer> targets = new ArrayList<>(sortedContainers);
-        targets.sort(Comparator.comparingDouble(ShipmentContainer::getOccupiedVolumePercent).reversed());
+        List<Container> targets = new ArrayList<>(sortedContainers);
+        targets.sort(Comparator.comparingDouble(Container::getOccupiedVolumePercent).reversed());
 
         for (ShipmentItem shipmentItem : new ArrayList<>(sourceItems)) {
             if (tryNextContainer(context, sourceContainer, shipmentItem, targets)) {
@@ -362,8 +364,8 @@ public class ShipmentService {
         return false;
     }
 
-    private boolean tryNextContainer(AssignmentContext context, ShipmentContainer sourceContainer, ShipmentItem shipmentItem, List<ShipmentContainer> targets) {
-        for (ShipmentContainer target : targets) {
+    private boolean tryNextContainer(AssignmentContext context, Container sourceContainer, ShipmentItem shipmentItem, List<Container> targets) {
+        for (Container target : targets) {
             if (target == sourceContainer) {
                 continue;
             }
@@ -380,22 +382,22 @@ public class ShipmentService {
         return false;
     }
 
-    private boolean moveItem(AssignmentContext context, ShipmentContainer sourceContainer, ShipmentContainer targetContainer, ShipmentItem shipmentItem) {
+    private boolean moveItem(AssignmentContext context, Container sourceContainer, Container targetContainer, ShipmentItem shipmentItem) {
         List<ShipmentItem> sourceItems = context.itemsByContainer.get(sourceContainer);
         if (sourceItems == null || !sourceItems.remove(shipmentItem)) {
             return false;
         }
 
         List<ShipmentItem> targetItems = context.itemsByContainer.computeIfAbsent(targetContainer, key -> new ArrayList<>());
-        double sourceWeight = sourceContainer.getCurrentWeight() == null ? 0.0 : sourceContainer.getCurrentWeight();
-        double sourceVolume = sourceContainer.getCurrentVolume() == null ? 0.0 : sourceContainer.getCurrentVolume();
-        double targetWeight = targetContainer.getCurrentWeight() == null ? 0.0 : targetContainer.getCurrentWeight();
-        double targetVolume = targetContainer.getCurrentVolume() == null ? 0.0 : targetContainer.getCurrentVolume();
+        double sourceWeight = sourceContainer.getWeight() == null ? 0.0 : sourceContainer.getWeight();
+        double sourceVolume = sourceContainer.getVolume() == null ? 0.0 : sourceContainer.getVolume();
+        double targetWeight = targetContainer.getWeight() == null ? 0.0 : targetContainer.getWeight();
+        double targetVolume = targetContainer.getVolume() == null ? 0.0 : targetContainer.getVolume();
 
-        sourceContainer.setCurrentWeight(sourceWeight - shipmentItem.getSvoris());
-        sourceContainer.setCurrentVolume(sourceVolume - shipmentItem.getTuris());
-        targetContainer.setCurrentWeight(targetWeight + shipmentItem.getSvoris());
-        targetContainer.setCurrentVolume(targetVolume + shipmentItem.getTuris());
+        sourceContainer.setWeight(sourceWeight - shipmentItem.getSvoris());
+        sourceContainer.setVolume(sourceVolume - shipmentItem.getTuris());
+        targetContainer.setWeight(targetWeight + shipmentItem.getSvoris());
+        targetContainer.setVolume(targetVolume + shipmentItem.getTuris());
         shipmentItem.setShipmentContainerId(targetContainer.getId());
         targetItems.add(shipmentItem);
         return true;
@@ -418,10 +420,10 @@ public class ShipmentService {
         return false;
     }
 
-    private void validateConstraints(List<ShipmentContainer> containers) {
-        for (ShipmentContainer container : containers) {
-            double currentWeight = container.getCurrentWeight() == null ? 0.0 : container.getCurrentWeight();
-            double currentVolume = container.getCurrentVolume() == null ? 0.0 : container.getCurrentVolume();
+    private void validateConstraints(List<Container> containers) {
+        for (Container container : containers) {
+            double currentWeight = container.getWeight() == null ? 0.0 : container.getWeight();
+            double currentVolume = container.getVolume() == null ? 0.0 : container.getVolume();
             if (currentWeight > container.getMaxWeight() + 0.000001) {
                 throw new IllegalStateException("Container weight exceeds allowed maximum");
             }
@@ -432,7 +434,7 @@ public class ShipmentService {
     }
 
     private boolean calculateMassCenterAndWeight(AssignmentContext context) {
-        for (ShipmentContainer container : context.containers) {
+        for (Container container : context.containers) {
             List<ShipmentItem> items = context.itemsByContainer.getOrDefault(container, new ArrayList<>());
             if (items.isEmpty()) {
                 continue;
@@ -493,16 +495,16 @@ public class ShipmentService {
     }
 
     private void deletePersistedShipments(Long orderId) {
-        List<ShipmentContainer> existingContainers = shipmentContainerRepository.findByOrderId(orderId);
-        for (ShipmentContainer container : existingContainers) {
+        List<Container> existingContainers = containerRepository.findByOrderId(orderId);
+        for (Container container : existingContainers) {
             shipmentItemRepository.deleteByShipmentContainerId(container.getId());
         }
-        shipmentContainerRepository.deleteByOrderId(orderId);
+        containerRepository.deleteByOrderId(orderId);
     }
 
     private void persistContainersAndItems(AssignmentContext context) {
-        for (ShipmentContainer container : context.containers) {
-            ShipmentContainer savedContainer = shipmentContainerRepository.save(container);
+        for (Container container : context.containers) {
+            Container savedContainer = containerRepository.save(container);
             List<ShipmentItem> items = context.itemsByContainer.getOrDefault(container, new ArrayList<>());
             for (ShipmentItem item : items) {
                 item.setShipmentContainerId(savedContainer.getId());
@@ -511,19 +513,19 @@ public class ShipmentService {
         }
     }
 
-    private ShipmentResultDto buildResultDto(Long orderId, List<ShipmentContainer> containers) {
+    private ShipmentResultDto buildResultDto(Long orderId, List<Container> containers) {
         ShipmentResultDto result = new ShipmentResultDto();
         result.setOrderId(orderId);
         List<ShipmentContainerDto> containerDtos = new ArrayList<>();
-        for (ShipmentContainer container : containers) {
+        for (Container container : containers) {
             ShipmentContainerDto containerDto = new ShipmentContainerDto();
             containerDto.setContainerId(container.getId());
             containerDto.setContainerType(container.getType() == null ? null : container.getType().name());
             containerDto.setHazardous(container.isHazardous());
             containerDto.setWarningLabel(container.getWarningLabel() == null ? null : container.getWarningLabel().name());
-            containerDto.setCurrentWeight(container.getCurrentWeight() == null ? 0.0 : container.getCurrentWeight());
+            containerDto.setCurrentWeight(container.getWeight() == null ? 0.0 : container.getWeight());
             containerDto.setMaxWeight(container.getMaxWeight() == null ? 0.0 : container.getMaxWeight());
-            containerDto.setCurrentVolume(container.getCurrentVolume() == null ? 0.0 : container.getCurrentVolume());
+            containerDto.setCurrentVolume(container.getVolume() == null ? 0.0 : container.getVolume());
             containerDto.setMaxVolume(container.getMaxVolume() == null ? 0.0 : container.getMaxVolume());
             containerDto.setOccupiedVolumePercent(container.getOccupiedVolumePercent());
             List<ShipmentItemDto> itemDtos = new ArrayList<>();
@@ -606,8 +608,8 @@ public class ShipmentService {
         private List<OrderItem> sourceItems = new ArrayList<>();
         private final List<OrderItem> hazardousItems = new ArrayList<>();
         private final List<OrderItem> regularItems = new ArrayList<>();
-        private final List<ShipmentContainer> containers = new ArrayList<>();
-        private final Map<ShipmentContainer, List<ShipmentItem>> itemsByContainer = new LinkedHashMap<>();
+        private final List<Container> containers = new ArrayList<>();
+        private final Map<Container, List<ShipmentItem>> itemsByContainer = new LinkedHashMap<>();
 
         private AssignmentContext(Long orderId) {
             this.orderId = orderId;
